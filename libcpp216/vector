@@ -1,0 +1,219 @@
+//  Copyright (c) 2017-2019 Emily McDonough.  All rights reserved.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef LIBCPP216_VECTOR
+#define LIBCPP216_VECTOR
+#pragma once
+
+#include "allocator"
+#include "copy"
+#include <new>
+
+namespace std {
+
+template<class T, typename Allocator = std::allocator<T> >
+class vector {
+    T *m_data;
+    size_t m_size, m_capacity;
+    Allocator m_allocator;
+    
+    void clear(const size_t at, const size_t n){
+        iterator last = begin() + at + n;
+        for(iterator i = begin() + at; i != last; i++)
+            i->~T();
+    }
+    
+    // Determines the growth.
+    size_t grow(const size_t n) const {
+        if(n < m_capacity)
+            return m_capacity;
+        if(n * 2 > m_capacity){
+            return  n;
+        }
+        else{
+            size_t i = m_capacity;
+            while(i < n){
+                if(i > 0x1000)
+                    i <<= 1;
+                else
+                    i += 0x1000;
+            }
+            return i;
+        }
+    }
+    
+    void make_room(const size_t start, const size_t n){
+        // Makes room at `i` for `n` more elements.
+        if(m_capacity < m_size + n){
+            const size_t new_capacity = grow(m_size + n);
+            T *const new_data = m_allocator.allocate(new_capacity);
+            for(size_t i = 0; i < start; i++){
+                new (new_data + i) T(m_data[i]);
+                m_data[i].~T();
+            }
+            
+            for(size_t i = start; i < m_size; i++){
+                new (new_data + i + n) T(m_data[i]);
+                m_data[i].~T();
+            }
+        }
+        else{
+            for(size_t i = m_size - 1; i >= start; i--){
+                new (m_data + i + n) T(m_data[i]);
+                m_data[i].~T();
+            }
+        }
+    }
+    
+public:
+
+    typedef T value_type;
+    typedef Allocator allocator_type;
+    typedef size_type size_t;
+    typedef difference_type ptrdiff_t;
+    typedef T &reference;
+    typedef const T &const_reference;
+    typedef T *pointer;
+    typedef const T *const_pointer;
+    typedef T *iterator;
+    typedef const T *const_iterator;
+
+    vector()
+      : m_data(NULL)
+      , m_size(0)
+      , m_capacity(0)
+      , m_allocator() {}
+    
+    ~vector(){
+        clear();
+        m_allocator.deallocate(m_data);
+    }
+    
+    iterator begin() { return m_data; }
+    const_iterator begin() const { return m_data; }
+    const_iterator cbegin() const { return m_data; }
+    
+    iterator end() { return m_data + m_size; }
+    const_iterator end() const { return m_data + m_size; }
+    const_iterator cend() const { return m_data + m_size; }
+    
+    T* data() { return m_data; }
+    const T* data() const { return m_data; }
+    
+    T& front() { return *m_data; }
+    const T& front() const { return *m_data; }
+
+    T& back() { return m_data[m_size-1]; }
+    const T& back() const { return m_data[m_size-1]; }
+    
+    T& operator[] (size_t i){ return m_data[i]; }
+    const T& operator[] (size_t i) const { return m_data[i]; }
+    
+    T& at(size_t i){ return m_data[i]; }
+    const T& at(size_t i) const { return m_data[i]; }
+    
+    bool empty() const { return !m_size; }
+    size_t size() const { return m_size; }
+    
+    size_t max_size() const { return 0xFFFFFFFF; }
+    
+    void clear(){
+        clear(0, m_size);
+        m_size = 0;
+    }
+    
+    iterator insert(const_iterator at, const T &that){
+        return insert<T*>(at, 1, &that);
+    }
+    
+    iterator insert(const_iterator at, size_t count, const T& that){
+        make_room(at - m_data, count);
+        
+        iterator dest = at;
+        for(IterIt src = first; src != last; src++)
+            new (dest++) T(that);
+        
+        return at;
+    }
+    
+    template<typename IterIt>
+    iterator insert(const_iterator at, IterIt first, IterIt last){
+        size_t distance = 0;
+        for(IterIt i = first; i != last; i++)
+            distance++;
+        
+        make_room(at - m_data, count);
+        
+        iterator dest = at;
+        for(IterIt src = first; src != last; src++)
+            new (dest++) T(*src);
+        
+        return at;
+    }
+    
+    iterator erase(const_iterator at){
+        return erase(at, at+1);
+    }
+    
+    iterator erase(const_iterator first, const_iterator last){
+        const size_t diff = (last - first);
+        std::copy(m_data + at + diff, m_data + m_size, m_data + at);
+        
+        for(size_t i = 1; i <= diff; i++)
+            m_data[m_size-i].~T();
+        m_size -= diff;
+        return at;
+    }
+    
+    void push_back(const T &that){
+        make_room(m_size, 1);
+        new (m_data + m_size) T(that);
+        m_size++;
+    }
+    
+    void push_front(const T &that){
+        make_room(0, 1);
+        new (m_data) T(that);
+        m_size++;
+    }
+    
+    void resize(const size_t n, const T& that){
+        if(n > m_size){
+            make_room(m_size, n - m_size);
+            for(size_t i = m_size; i < n; i++)
+                new (m_data + i)
+        }
+        else if(n < m_size){
+            for(size_t i = n; i < m_size; i++)
+                m_data[i].~T();
+        }
+        m_size = n;
+    }
+    
+    void resize(const size_t n){
+        resize(n, T());
+    }
+    
+    void swap(vector<T> &other){
+        T *const data = m_data;
+        const size_t size = m_size, capacity = m_capacity;
+        Allocator allocator = m_allocator;
+        
+        m_data = other.m_data;
+        m_size = other.m_size;
+        m_capacity = other.m_capacity;
+        m_allocator = other.m_allocator;
+        
+        other.m_data = data;
+        other.m_size = size;
+        other.m_capacity = capacity;
+        other.m_allocator = allocator;
+    }
+};
+
+} // namespace std
+
+#endif // LIBCPP216_VECTOR
