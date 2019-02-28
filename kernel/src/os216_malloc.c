@@ -1,5 +1,4 @@
-/*
- *  Copyright (c) 2017-2019 Emily McDonough.  All rights reserved.
+/*  Copyright (c) 2017-2019 Emily McDonough.  All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -24,34 +23,42 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef OS216_MALLOC_H
-#define OS216_MALLOC_H
-#pragma once
+#include "os216_malloc.h"
+#include "os216_nano_fatal.h"
+#include "os216_nano_physmem.h"
 
-#include <stddef.h>
+/* TODO! Actually allocate physical pages and be an allocator.
+ * we can still use the slab for metadata about allocations.
+ */
 
-/*****************************************************************************/
+static unsigned amount = 0, top = 0;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void *malloc(size_t n){
+    void *const v = (char*)os216_slab_ptr + amount;
+    amount += n;
+    
+    if(amount > os216_slab_size){
+        OS216_Nano_Fatal("Kernel out of memory");
+    }
+    
+    top = n;
+    return v;
+}
 
-/*****************************************************************************/
+void *calloc(size_t n, size_t i){
+    const unsigned total = n * i;
+    char *const v = (char*)malloc(total);
+    unsigned a;
+    for(a = 0; a < total; a++){
+        v[a] = 0;
+    }
+    return v;
+}
 
-void *malloc(size_t n);
-
-/*****************************************************************************/
-
-void *calloc(size_t n, size_t i);
-
-/*****************************************************************************/
-
-void free(void *);
-
-/*****************************************************************************/
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* OS216_MALLOC_H */
+void free(void *p){
+    /* This is silly at best. */
+    if(p == (char*)os216_slab_ptr + amount){
+        amount -= top;
+        top = 0;
+    }
+}

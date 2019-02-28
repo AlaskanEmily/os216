@@ -27,7 +27,7 @@ clean_nanokernel:
 	$(MAKE) -C nanokernel PLATFORM=$(PLATFORM) clean
 
 kernel/libos216_$(PLATFORM).a: make_kernel_objdir
-	$(MAKE) -C kernel PLATFORM=$(PLATFORM) CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)" AR=$(AR) RANLIB=$(RANLIB)
+	$(MAKE) -C kernel PLATFORM=$(PLATFORM) CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)" CC=$(CC) CFLAGS="$(CFLAGS)" AR=$(AR) RANLIB=$(RANLIB)
 
 clean_kernel:
 	$(MAKE) -C kernel PLATFORM=$(PLATFORM) clean

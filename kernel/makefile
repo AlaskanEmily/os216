@@ -13,8 +13,8 @@ OBJECTS=$(OBJDIR)/os216_init.o $(OBJDIR)/os216_malloc.o $(OBJDIR)/os216_cpp.o
 $(OBJDIR)/os216_init.o: src/os216_init.cpp $(NANOKERNELDIR)/os216_nano_init.h  $(NANOKERNELDIR)/os216_nano_timer.h  $(NANOKERNELDIR)/os216_nano_interrupt.h  $(NANOKERNELDIR)/os216_nano_virtmem.h 
 	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c src/os216_init.cpp -o $(OBJDIR)/os216_init.o
 
-$(OBJDIR)/os216_malloc.o: src/os216_malloc.cpp src/os216_malloc.h
-	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c src/os216_malloc.cpp -o $(OBJDIR)/os216_malloc.o
+$(OBJDIR)/os216_malloc.o: src/os216_malloc.c src/os216_malloc.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c src/os216_malloc.c -o $(OBJDIR)/os216_malloc.o
 
 $(OBJDIR)/os216_cpp.o: src/os216_cpp.cpp src/os216_cpp.hpp src/os216_malloc.h
 	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c src/os216_cpp.cpp -o $(OBJDIR)/os216_cpp.o
