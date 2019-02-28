@@ -67,8 +67,10 @@ OS216_Nano_AllocatePhysPage:
     ; Find the first open index. Set stuff up for wacky x86iness
     mov edi, memory_map
     mov ecx, PAGE_BITMASK_32_SIZE
+    
     ; Get all F's into eax
-    xor eax, eax
+    ; We know that eax is zero because of the mov ecx, eax/jecxz
+    ; xor eax, eax
     dec eax
     repne stosd ; Find the first non-filled byte
     not eax
@@ -77,7 +79,8 @@ OS216_Nano_AllocatePhysPage:
     ; Get 1 into eax
     xor eax, eax
     inc eax
-    shl eax, cl ; Coincidentally, ecx is the only register we can use for a shift.
+    ; Coincidentally, ecx is the only register we can use for a shift.
+    shl eax, cl
     ; Fill in the entry
     or [edi-4], eax
     mov eax, ecx ; Put the byte index into eax...
