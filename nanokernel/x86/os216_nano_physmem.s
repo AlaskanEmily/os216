@@ -63,6 +63,11 @@ OS216_Nano_AllocatePhysPage:
     jecxz .find_page_iter
     bsf edx, ecx
     
+    ; Set that this page is used.
+    not ecx
+    bts ecx, edx
+    mov [memory_map+eax*4], ecx
+    
     mov ecx, PAGE_LOW_START
     ; Check if we are in the low map
     cmp eax, PAGE_LOW_BIT_32_SIZE
