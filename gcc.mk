@@ -68,6 +68,9 @@ make_kernel_objdir:
 make_libc216_objdir:
 	mkdir libc216/obj_$(PLATFORM)
 
+clean_elf:
+	rm $(KERNELBIN)
+
 .IGNORE: clean clean_nanokernel clean_kernel clean_libc216 make_nanokernel_objdir make_kernel_objdir make_libc216_objdir
 .SILENT: make_nanokernel_objdir make_kernel_objdir make_lib216_objdir
 .PHONY: clean clean_nanokernel clean_kernel clean_libc216 make_nanokernel_objdir make_kernel_objdir make_libc216_objdir build_liborl

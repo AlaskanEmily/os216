@@ -19,7 +19,17 @@ $(OBJDIR)/os216_malloc.o: src/os216_malloc.c src/os216_malloc.h
 $(OBJDIR)/os216_cpp.o: src/os216_cpp.cpp src/os216_cpp.hpp src/os216_malloc.h
 	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c src/os216_cpp.cpp -o $(OBJDIR)/os216_cpp.o
 
-libos216_$(PLATFORM).a: $(OBJECTS) $(NANOKERNELROOTDIR)/$(PLATFORM)/os216_nano.ld
+libos216_$(PLATFORM).a: remove_tmp_a $(OBJECTS) $(NANOKERNELROOTDIR)/$(PLATFORM)/os216_nano.ld
 	$(AR) rc libos216_$(PLATFORM)_x.a $(OBJECTS)
 	$(RANLIB) libos216_$(PLATFORM)_x.a
 	mv libos216_$(PLATFORM)_x.a libos216_$(PLATFORM).a
+
+remove_tmp_a:
+	rm libos216_$(PLATFORM)_x.a
+
+clean: remove_tmp_a
+	rm -rf obj_$(PLATFORM)
+
+.SILENT: remove_tmp_a
+.PHONY: remove_tmp_a clean
+.IGNORE: remove_tmp_a clean
