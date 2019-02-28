@@ -25,17 +25,17 @@
 
 #include "os216_malloc.h"
 #include "os216_nano_fatal.h"
+#include "os216_nano_physmem.h"
 
 // TODO! Actually allocate physical pages and be an allocator.
 
-static unsigned char buffer[4096];
 static unsigned amount = 0, top = 0;
 
 void *malloc(size_t n){
-    void *const v = buffer + amount;
+    void *const v = (char*)os216_slab_ptr + amount;
     amount += n;
     
-    if(amount > sizeof(buffer)){
+    if(amount > os216_slab_size){
         OS216_Nano_Fatal("Kernel out of memory");
     }
     
@@ -54,7 +54,7 @@ void *calloc(size_t n, size_t i){
 
 void free(void *p){
     // This is silly at best.
-    if(p == buffer + amount){
+    if(p == (char*)os216_slab_ptr + amount){
         amount -= top;
         top = 0;
     }

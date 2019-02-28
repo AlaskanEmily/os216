@@ -49,10 +49,16 @@ $(OBJDIR)/os216_nano_syscall.o: x86/os216_nano_syscall.s
 X86OBJECTS=$(OBJDIR)/os216_nano_init.o $(OBJDIR)/os216_nano_syscall.o $(X86TIMERS) $(X86INTERRUPTS) $(X86MEMORY)
 
 # PC objects, shared between amd64 and x86
-PCOBJECTS=$(OBJDIR)/os216_nano_console_vga.o
+PCOBJECTS=$(OBJDIR)/os216_nano_console_vga.o $(OBJDIR)/os216_nano_paging.o $(OBJDIR)/os216_nano_slab.o
 
 $(OBJDIR)/os216_nano_console_vga.o: pc/os216_nano_console_vga.c include/os216_nano_console.h
 	$(CC) $(CFLAGS) -I./include -c pc/os216_nano_console_vga.c -o $(OBJDIR)/os216_nano_console_vga.o
+
+$(OBJDIR)/os216_nano_slab.o: pc/os216_nano_slab.c
+	$(CC) $(CFLAGS) -I./include -c pc/os216_nano_slab.c -o $(OBJDIR)/os216_nano_slab.o
+
+$(OBJDIR)/os216_nano_paging.o: pc/os216_nano_paging.c
+	$(CC) $(CFLAGS) -c pc/os216_nano_paging.c -o $(OBJDIR)/os216_nano_paging.o
 
 # Common objects
 COMMONOBJECTS=$(OBJDIR)/os216_nano_multiboot.o $(OBJDIR)/os216_nano_fatal.o

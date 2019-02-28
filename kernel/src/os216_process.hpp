@@ -27,9 +27,17 @@
 #define OS216_PROCESS_HPP
 #pragma once
 
+#include "os216_machine.h"
+
 namespace OS216 {
 
+// TODO:
+struct OS216_SyscallTable {};
+
 class Process {
+    // Page table location (physical location)
+    void *page_table;
+    struct OS216_SyscallTable table;
     
 };
 

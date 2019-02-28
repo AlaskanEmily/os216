@@ -33,7 +33,7 @@ clean_kernel:
 	$(MAKE) -C kernel PLATFORM=$(PLATFORM) clean
 
 build_liborl:
-	$(MAKE) -C liborl static CC=$(CC) CFLAGS="$(CFLAGS)" AR=$(AR) RANLIB=$(RANLIB) INCLUDEFLAGS=-I../libc216/include
+	$(MAKE) -C liborl static CC=$(CC) CFLAGS="$(CFLAGS) -I../libc216/include" AR=$(AR) RANLIB=$(RANLIB) INCLUDEFLAGS=-I../libc216/include
 	cp liborl/liborl-static.a liborl/liborl_$(PLATFORM).a
 
 liborl/liborl_$(PLATFORM).a: build_liborl

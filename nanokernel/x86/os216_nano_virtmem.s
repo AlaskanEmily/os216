@@ -148,7 +148,7 @@ os216_global_descriptor_table:
 
  ;      0x90: ring 3, all memory, until ACPI, Data
     os216_gdt_data_entry(0, NO_ACPI_LIMIT, 3)
- 
+
  ;      0x98: Task segment
 os216_tss_descriptor:
     ; TSS, will be fully filled out later
