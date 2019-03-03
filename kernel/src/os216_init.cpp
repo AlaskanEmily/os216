@@ -29,14 +29,17 @@
 #include "os216_nano_virtmem.h"
 #include "os216_nano_console.h"
 
+#include <stdio.h>
+
 // For testing purposes
 static int n = 0;
 static void timer_callback(void *x){
     (void)x;
     n++;
     if((n % 100) == 0){
-        const char c = '0' + ((n / 100) % 10);
-        OS216_Nano_ConsolePutChar(c, OS216_NANO_CONSOLE_NORMAL, 1, 4);
+        char buffer[80];
+        sprintf(buffer, "%i", (n / 100));
+        OS216_Nano_ConsolePutString(buffer, OS216_NANO_CONSOLE_NORMAL, 1, 4);
     }
 }
 
