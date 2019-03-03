@@ -26,179 +26,50 @@
 
 #include "os216_nano_bitmask.h"
 
-static const uint32_t os216_bitmasks[] = {
-    0x00000000,
-    0x00000001,
-    0x00000003,
-    0x00000007,
-    0x0000000F,
-    0x0000001F,
-    0x0000003F,
-    0x0000007F,
-    0x000000FF,
-    0x000001FF,
-    0x000003FF,
-    0x000007FF,
-    0x00000FFF,
-    0x00001FFF,
-    0x00003FFF,
-    0x00007FFF,
-    0x0000FFFF,
-    0x0001FFFF,
-    0x0003FFFF,
-    0x0007FFFF,
-    0x000FFFFF,
-    0x001FFFFF,
-    0x003FFFFF,
-    0x007FFFFF,
-    0x0FFFFFFF,
-    0x1FFFFFFF,
-    0x3FFFFFFF,
-    0x7FFFFFFF,
-    0xFFFFFFFF
-};
+#include <stdint.h>
 
-/* Returns 0 if there are not count leading zeroes.
- * DO NOT pass a count > 32.
- */
-static int os216_nano_count_leading(const uint32_t bitmask,
-    const size_t count){
+size_t OS216_Nano_FindBitmaskGap(const void *bitmap_v,
+    size_t map_size,
+    size_t gap_size){
     
-    return bitmask & os216_bitmasks[count];
-}
-
-/* Returns how many leading bits (from most-significant) that are zero */
-static size_t os216_nano_count_trailing(const uint32_t bitmask){
-    
-    const uint32_t mask = 0x80000000; /* Top bit set */
+    const unsigned char *const bitmap = bitmap_v;
     size_t i = 0;
-    while(((mask >> i) & bitmask) == 0)
-        i++;
-    return i;
-}
-
-/* Finds a gap of count within the mask. Returns the offset into the bitmask
- * plus one, or zero if no such gap exists.
- * DO NOT pass a count > 32.
- */
-static size_t os216_nano_inner_gap(const uint32_t bitmask,
-    const size_t count){
     
-    const uint32_t mask = os216_bitmasks[count];
-    uint32_t i = 0;
-    do{
-        const size_t result = bitmask & (mask << i);
-        i++;
-        if(result == 0){
-            return i;
-        }
-    }while(i + count < 32);
+    if(map_size == 0)
+        return 0;
     
-    return 0;
-}
-
-/* Finds a gap of 32-bits or less. */
-static size_t os216_nano_find_small_bitmask_gap(const uint32_t *bitmask,
-    size_t max_size,
-    size_t gap_size){
+    if(gap_size == 0)
+        return 1;
     
-    size_t i = 0;
-    while(max_size != 0){
-        if(*bitmask != 0xFFFFFFFF){
+    while((i + gap_size) / 8 < map_size){
+        size_t run = 0;
+        uint32_t last = 0;
+        
+        do{
+            const size_t byte = (i + run) / 8;
+            const size_t bit = (i + run) % 8;
+            last = bitmap[byte] & bit;
             
-            {
-                /* Try for an inner gap first. */
-                const size_t gap = os216_nano_inner_gap(*bitmask, gap_size);
-                if(gap != 0)
-                    return (i<<2)+gap;
-            }
+            if(++run == gap_size)
+                return i + 1;
             
-            if(max_size > 1){
-                /* Check for a gap bordering the edge. */
-                const size_t trail = os216_nano_count_trailing(*bitmask);
-                if(trail != 0){
-                    const size_t lead =
-                        os216_nano_count_leading(bitmask[1], gap_size-trail);
-                    if(lead == 0)
-                        return (i<<2)+(32-trail);
-                }
-            }
-        }
-        max_size--;
-        i++;
-        bitmask++;
+        }while(last == 0);
+        
+        i += run;
     }
     
     return 0;
 }
 
-/* Finds a gap greater than 32-bits. */
-static size_t os216_nano_find_large_bitmask_gap(const uint32_t *bitmask,
-    size_t max_size,
-    size_t gap_size){
-    
-    size_t i;
-    const size_t required = 1+(gap_size >> 5);
-    while(max_size > required){
-        if(*bitmask != 0xFFFFFFFF){
-            const size_t trail = os216_nano_count_trailing(*bitmask);
-            if(trail != 0){
-                const size_t required_empty = (gap_size - trail) >> 5;
-                const size_t lead_size = (gap_size - trail) & 0x31;
-                size_t empty;
-                for(empty = 0; empty < required_empty; empty++){
-                    if(bitmask[empty+1] != 0){
-                        break;
-                    }
-                }
-                
-                if(empty == required_empty){
-                    /* Now search for the lead... */
-                    const uint32_t lead_mask = bitmask[required_empty];
-                    const size_t lead =
-                        os216_nano_count_leading(lead_mask, lead_size);
-                    if(lead == 0)
-                        return (i<<2)+(32-trail);
-                }
-                else{
-                    /* We can set things up to start searching again from
-                     * this location... */
-                    i += empty;
-                    max_size -= empty;
-                    bitmask += empty;
-                }
-            }
-        }
-        max_size--;
-        i++;
-        bitmask++;
-    }
-    return 0;
-}
-
-size_t OS216_Nano_FindBitmaskGap(const uint32_t *bitmask,
-    size_t max_size,
-    size_t gap_size){
-    
-    if(gap_size > 32){
-        return os216_nano_find_large_bitmask_gap(bitmask,
-            max_size >> 2,
-            gap_size);
-    }
-    else{
-        return os216_nano_find_small_bitmask_gap(bitmask,
-            max_size >> 2,
-            gap_size);
-    }
-}
-
+/*****************************************************************************/
 /* Marks (sets) count bits at offset number of bits into the bitmask */
-void OS216_Nano_MarkBitmask(uint32_t *bitmask,
+void OS216_Nano_MarkBitmask(void *bitmask,
     size_t offset,
     size_t count);
 
+/*****************************************************************************/
 /* Unmarks (clears) count bits at offset number of bits into the bitmask */
-void OS216_Nano_UnmarkBitmask(uint32_t *bitmask,
+void OS216_Nano_UnmarkBitmask(void *bitmask,
     size_t offset,
     size_t count);
 

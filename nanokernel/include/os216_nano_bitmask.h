@@ -30,32 +30,41 @@
 
 /* Operations on 32-bit aligned bitmasks. */
 
-#include <stdint.h>
+#include <stddef.h>
+
+/*****************************************************************************/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/*****************************************************************************/
 /* Finds a gap of at least gap_size in the bitmask.
  * returns the bit offset into bitmask where the gap was found plus one, or
  * zero if no suitable gap was found.
  */
-size_t OS216_Nano_FindBitmaskGap(const uint32_t *bitmask,
+size_t OS216_Nano_FindBitmaskGap(const void *bitmap,
     size_t max_size,
     size_t gap_size);
 
+/*****************************************************************************/
 /* Marks (sets) count bits at offset number of bits into the bitmask */
-void OS216_Nano_MarkBitmask(uint32_t *bitmask,
+void OS216_Nano_MarkBitmask(void *bitmap,
     size_t offset,
     size_t count);
 
+/*****************************************************************************/
 /* Unmarks (clears) count bits at offset number of bits into the bitmask */
-void OS216_Nano_UnmarkBitmask(uint32_t *bitmask,
+void OS216_Nano_UnmarkBitmask(void *bitmap,
     size_t offset,
     size_t count);
+
+/*****************************************************************************/
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+/*****************************************************************************/
 
 #endif /* OS216_NANO_BITMASK_H */
