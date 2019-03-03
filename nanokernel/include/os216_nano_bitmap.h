@@ -24,11 +24,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef OS216_NANO_BITMASK_H
-#define OS216_NANO_BITMASK_H
+#ifndef OS216_NANO_BITMAP_H
+#define OS216_NANO_BITMAP_H
 #pragma once
 
-/* Operations on 32-bit aligned bitmasks. */
+/* Operations on bitmaps. */
 
 #include <stddef.h>
 
@@ -39,23 +39,23 @@ extern "C" {
 #endif
 
 /*****************************************************************************/
-/* Finds a gap of at least gap_size in the bitmask.
- * returns the bit offset into bitmask where the gap was found plus one, or
+/* Finds a gap of at least gap_size in the bitmap.
+ * returns the bit offset into bitmap where the gap was found plus one, or
  * zero if no suitable gap was found.
  */
-size_t OS216_Nano_FindBitmaskGap(const void *bitmap,
+size_t OS216_Nano_FindBitmapGap(const void *bitmap,
     size_t max_size,
     size_t gap_size);
 
 /*****************************************************************************/
-/* Marks (sets) count bits at offset number of bits into the bitmask */
-void OS216_Nano_MarkBitmask(void *bitmap,
+/* Marks (sets) count bits at offset number of bits into the bitmap */
+void OS216_Nano_MarkBitmap(void *bitmap,
     size_t offset,
     size_t count);
 
 /*****************************************************************************/
-/* Unmarks (clears) count bits at offset number of bits into the bitmask */
-void OS216_Nano_UnmarkBitmask(void *bitmap,
+/* Unmarks (clears) count bits at offset number of bits into the bitmap */
+void OS216_Nano_UnmarkBitmap(void *bitmap,
     size_t offset,
     size_t count);
 
@@ -67,4 +67,4 @@ void OS216_Nano_UnmarkBitmask(void *bitmap,
 
 /*****************************************************************************/
 
-#endif /* OS216_NANO_BITMASK_H */
+#endif /* OS216_NANO_BITMAP_H */

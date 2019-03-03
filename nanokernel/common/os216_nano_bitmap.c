@@ -24,13 +24,13 @@
  * IN THE SOFTWARE.
  */
 
-#include "os216_nano_bitmask.h"
+#include "os216_nano_bitmap.h"
 
 #include <stdint.h>
 
-size_t OS216_Nano_FindBitmaskGap(const void *bitmap_v,
-    size_t map_size,
-    size_t gap_size){
+size_t OS216_Nano_FindBitmapGap(const void *const bitmap_v,
+    const size_t map_size,
+    const size_t gap_size){
     
     const unsigned char *const bitmap = bitmap_v;
     size_t i = 0;
@@ -62,14 +62,37 @@ size_t OS216_Nano_FindBitmaskGap(const void *bitmap_v,
 }
 
 /*****************************************************************************/
+/* Used to implement mark/unmark */
+
+#define OS216_MASK_ACTION(WINDOW, AT) do{ (WINDOW) |= (1 << (AT)); }while(0)
+
+#define OS216_UNMASK_ACTION(WINDOW, AT) do{ (WINDOW) &= ~(1 << (AT)); }while(0)
+
+#define OS216_VISIT_BITMAP(BITMAP, OFFSET, COUNT, ACTION) do{ \
+        unsigned char *window = ((unsigned char*)(BITMAP)) + ((OFFSET) / 8); \
+        size_t at = (OFFSET) % 8, remaining = (COUNT); \
+        do{ \
+            ACTION(window[0], at); \
+            remaining--; \
+            if(++at == 8){ \
+                window++; \
+                at = 0; \
+            } \
+        }while(remaining != 0); \
+    }while(0)
+
+/*****************************************************************************/
 /* Marks (sets) count bits at offset number of bits into the bitmask */
-void OS216_Nano_MarkBitmask(void *bitmask,
-    size_t offset,
-    size_t count);
+void OS216_Nano_MarkBitmap(void *const bitmap,
+    const size_t offset,
+    const size_t count){
+    OS216_VISIT_BITMAP(bitmap, offset, count, OS216_MASK_ACTION);
+}
 
 /*****************************************************************************/
 /* Unmarks (clears) count bits at offset number of bits into the bitmask */
-void OS216_Nano_UnmarkBitmask(void *bitmask,
-    size_t offset,
-    size_t count);
-
+void OS216_Nano_UnmarkBitmap(void *const bitmap,
+    const size_t offset,
+    const size_t count){
+    OS216_VISIT_BITMAP(bitmap, offset, count, OS216_UNMASK_ACTION);
+}
