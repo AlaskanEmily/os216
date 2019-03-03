@@ -47,8 +47,9 @@ void OS216_Main(const char *maybe_kernel_cmd_line){
     OS216_Nano_InitTimer();
     OS216_Nano_InitInterruptController();
     OS216_Nano_InitVirtualMemory();
+    
     OS216_Nano_EnableInterrupts();
-     
+    
     // Clear the screen
     for(unsigned y = 0; y < OS216_Nano_GetConsoleHeight(); y++)
         OS216_Nano_ConsoleFillLine(' ', OS216_NANO_CONSOLE_NORMAL, y);

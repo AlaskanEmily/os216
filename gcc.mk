@@ -47,7 +47,7 @@ libc216/libc216_$(PLATFORM).a: make_libc216_objdir
 clean_libc216:
 	$(MAKE) -C libc216 PLATFORM=$(PLATFORM) clean
 
-KERNELLIBS=nanokernel/lib$(PLATFORM).a kernel/libos216_$(PLATFORM).a libc216/libc216_$(PLATFORM).a liborl/liborl_$(PLATFORM).a
+KERNELLIBS=kernel/libos216_$(PLATFORM).a nanokernel/lib$(PLATFORM).a libc216/libc216_$(PLATFORM).a liborl/liborl_$(PLATFORM).a
 LIBGCCCMD=i486-elf-gcc --print-file-name=libgcc.a
 LINKERSCRIPT=nanokernel/$(PLATFORM)/os216_nano.ld
 

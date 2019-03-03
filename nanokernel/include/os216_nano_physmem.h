@@ -59,6 +59,9 @@ extern const uint32_t os216_nano_page_size;
 extern uint32_t os216_phys_memory_size;
 
 /*****************************************************************************/
+void OS216_Nano_InitPhysManager(void);
+
+/*****************************************************************************/
 /* Claims a free page of physical memory.
  *
  * This will only return NULL on OOM.
@@ -84,15 +87,6 @@ void OS216_Nano_MarkPhysPage(void *);
  * Double-frees are OK.
  */
 void OS216_Nano_FreePhysPage(void *);
-
-/*****************************************************************************/
-/* The slab is a location meant to bootstrap the allocator, which is guaranteed
- * to be outside the range utilized by OS216_Nano_AllocatePhysPage. It should
- * really only be used for metadata about allocations and for small one-time
- * allocations.
- */
-extern const uint32_t os216_slab_size;
-extern void *const os216_slab_ptr;
 
 #ifdef __cplusplus
 } // extern "C"

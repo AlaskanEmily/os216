@@ -31,6 +31,8 @@
  * we can still use the slab for metadata about allocations.
  */
 
+static unsigned char os216_slab_ptr[4096];
+static const unsigned os216_slab_size = sizeof(os216_slab_ptr);
 static unsigned amount = 0, top = 0;
 
 void *malloc(size_t n){

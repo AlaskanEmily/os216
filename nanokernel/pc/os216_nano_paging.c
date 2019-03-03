@@ -29,15 +29,25 @@
  * directories.
  */
 
-#define OS216_PC_WRT (1<<0)
-#define OS216_PC_USR (1<<1)
-#define OS216_PC_EXE (1<<2)
-#define OS216_PC_BIG (1<<3)
+#define OS216_PC_WRT (1<<0) /* Page is writable */
+#define OS216_PC_USR (1<<1) /* Page is accessible from rings >0 */
+#define OS216_PC_EXE (1<<2) /* Page is executable (PAE only) */
+#define OS216_PC_BIG (1<<3) /* Page is 4MB */
+
+#define OS216_PC_PAGING_TYPE_SHIFT 4
+#define OS216_PC_GET_PAGING_FLAGS(FLAGS) \
+    ((FLAGS>>OS216_PC_PAGING_TYPE_SHIFT)&3)
+#define OS216_PC_PAGING_X86 0
+#define OS216_PC_PAGING_PAE 2
+#define OS216_PC_PAGING_AMD 3
+#define OS216_PC_PAGING_IS_PAE(FLAGS) \
+    (FLAGS & (OS216_PC_PAGING_PAE<<OS216_PC_PAGING_TYPE_SHIFT))
 
 /*****************************************************************************/
 
 union OS216_PageTableEntry {
     void *ptr;
+    /* Page entries are the size of a pointer on both x86 and amd64 */
     unsigned char bytes[sizeof(void*)];
     unsigned char flags;
 };
@@ -53,11 +63,31 @@ static void os216_setup_page_table_entry(union OS216_PageTableEntry *entry,
 
 /*****************************************************************************/
 
+void OS216_Nano_SetupMapping(union OS216_PageTableEntry *root,
+    void *virt_address,
+    void *phys_address,
+    int flags){
+    /* Flags is defined low 16-bits of flags and high 16-bits of pagecount */
+    const unsigned short num_pages = flags >> 16;
+    (void)num_pages;
+    switch(OS216_PC_GET_PAGING_FLAGS(flags)){
+        default: /* FALLTHROUGH, probably error */
+        case OS216_PC_PAGING_X86:
+            break;
+        case OS216_PC_PAGING_PAE:
+            break;
+        case OS216_PC_PAGING_AMD:
+            break;
+    }
+}
+
+/*****************************************************************************/
+
 void OS216_Nano_SetupPageTableEntry(union OS216_PageTableEntry *entry,
     void *addr,
     int flags){
     entry->ptr = addr;
     os216_setup_page_table_entry(entry, flags);
-    if(flags & OS216_PC_BIG)
+    if(flags & OS216_PC_BIG) /* Set the HUGE page bit */
         entry->flags |= 0x80;
 }

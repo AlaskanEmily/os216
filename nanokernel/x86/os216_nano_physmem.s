@@ -29,20 +29,39 @@ global OS216_Nano_FreePhysPage
 global OS216_Nano_MarkPhysPage
 
 PAGE_SHIFT equ 12
-PAGE_SIZE equ 4096
-PAGE_BITMASK_SIZE equ 97984
-PAGE_BITMASK_32_SIZE equ (PAGE_BITMASK_SIZE/4)
+PAGE_SIZE equ 4096 ; (1<<PAGE_SHIFT)
 
+; Number of bytes in the bitmap representing the lo area
 PAGE_LO_BYTE_SIZE equ 192
+; Number of 4-byte elements in the bitmap (useful for repne scas)
 PAGE_LO_BYTE_32_SIZE equ (PAGE_LO_BYTE_SIZE/4)
+; Number of bits in the bitmap used for the lo area
 PAGE_LO_BIT_SIZE equ (PAGE_LO_BYTE_SIZE*8)
 
-PAGE_LO_START equ 0x00900000
-PAGE_HI_START equ 0x01000000
+PAGE_LO_START equ 0x00900000 ; 9 MB
+PAGE_HI_START equ 0x01000000 ; 16 MB
+
+SCRATCH_BITMAP_DIFF equ 0x40
+SCRATCH_PTR equ 0x00000500
+BITMAP_ADDR equ SCRATCH_PTR+SCRATCH_BITMAP_DIFF
+PAGE_BITMASK_SIZE equ 97984
+PAGE_BITMASK_32_SIZE equ (PAGE_BITMASK_SIZE/4)
 
 segment .text
 ; The nanokernel expects that it is loaded between 0x00100000 and 0x00900000,
 ; which is 1 MB to 9 MB. 
+
+OS216_Nano_InitPhysManager:
+    ; Move all zeros into the bitmap
+    xor eax, eax
+    mov edx, edi ; Save edi
+    mov edi, BITMAP_ADDR
+    mov ecx, PAGE_BITMASK_32_SIZE
+    rep stosd
+    mov edi, edx ; Restore edi
+    inc eax
+    mov [SCRATCH_PTR], eax ; Set the spinlock.
+    ret
 
 ; There are 2048 pages for the kernel (TODO: use huge pages?)
 ; 6291456 bytes after the kernel, which is 1536 pages.
@@ -51,72 +70,57 @@ segment .text
 ; That totals 97984 bytes to hold all the bits, 192 bytes of which are below ISA.
 
 OS216_Nano_AllocatePhysPage:
-    ; Find out of we can just reuse the freed index
+    mov ecx, PAGE_BITMASK_32_SIZE
+    ; Set eax to all F's
+    mov edx, edi ; Save edi
+    mov edi, BITMAP_ADDR
+
     xor eax, eax
-    lock xchg eax, [last_freed_index]
-    mov ecx, eax
-    jecxz .calculate_next_index
-    ; last_freed_index is usable
-    dec eax
-    jmp compute_address_from_bitmask
-.oom:
-    mov edi, edx
+    cld ; Ensure we move the correct direction
+    ; Lock the spinlock
+.spin:
+    lock xchg eax, [edi-SCRATCH_BITMAP_DIFF]
+    cmp eax, 0
+    je .spin
+    
     xor eax, eax
-    ret
-.calculate_next_index
-    
-    ; Find the first open index. Set stuff up for wacky x86iness
-    mov ecx, filled_until
-    mov edx, edi ; Save edi into edx
-    lea edi, [ecx+4+ecx*4] ; filled_until+4 == memory_map
-    mov ecx, [ecx]
-    sub ecx, PAGE_BITMASK_32_SIZE
-    jna .oom ; filled_until is maxed out or oob
-    
-    neg ecx
-    
-    ; Get all F's into eax
-    ; We know that eax is zero because of the mov ecx, eax/jecxz
-    ; xor eax, eax
-    dec eax
-    cld ; Ensure direction is forward.
-    repne scasd ; Find the first non-filled byte
+    not eax
+    repne scasd
+    xchg edi, edx ; restore edi, put edi found into edx
     
     jecxz .oom
     
-    xchg edi, edx ; Restore edi, put the new EDI into edx
+    ; Correct for the one extra increment that scasd does.
+    mov eax, [edx-4]
     
-    ; Update filled_until.
+    ; Get the upper bits
+    sub edx, BITMAP_ADDR+4
     
-    ; ecx = PAGE_BITMASK_32_SIZE - ecx
-    neg ecx
-    add ecx, PAGE_BITMASK_32_SIZE
-    lock xchg [filled_until], ecx
+    ; Find the first unset bit in eax
+    mov ecx, 31
     
-    not eax
-    bsf ecx, eax ; Get the bit index into ecx
-    ; Get 1 into eax
+.find_next_bit:
+    
+    ; Since ecx is at 31 first, move out the left
+    rcl eax, 1
+    jnc .found
+    
+    loop .find_next_bit
+    ; FALLTHROUGH
+.oom:
+    xor eax, eax
+    jmp unlock_spinlock
+.found:
     xor eax, eax
     inc eax
-    ; Coincidentally, ecx is the only register we can use for a shift.
     shl eax, cl
+    or [BITMAP_ADDR+edx], eax
+    lea eax, [edx*4 + eax]
+    ; FALLTHROUGH
     
-    ; Fill in the entry in the memory map.
-    lock or [edx-4], eax
-    
-    ; Set eax to the entry index.
-    sub edx, memory_map+4
-    lea eax, [edx+ecx]
-    
-compute_address_from_bitmask:
-    shl eax, PAGE_SHIFT
-    cmp eax, (PAGE_LO_BIT_SIZE<<PAGE_SHIFT)
-    jg .hi_address
-.lo_address
-    add eax, PAGE_LO_START
-    ret
-.hi_address:
-    add eax, PAGE_HI_START
+unlock_spinlock:
+    ; Unlock the spinlock
+    lock or DWORD [SCRATCH_PTR], 1
     ret
 
 ; Expects the address in eax, returns the resulting byte in eax and bit in ecx.
@@ -134,41 +138,36 @@ compute_bitmask_from_address:
     ; Subtract the lo start to make eax a bit index
     sub eax, (PAGE_LO_START>>PAGE_SHIFT)
 .bitmask_index_set:
-    mov ecx, eax
+    mov edx, eax
     shr eax, 5
-    and ecx, 0x1F ; Mask ecx to 31
-    lea eax, [memory_map+eax*4]
+    and edx, 0x1F ; Mask edx to 31
+    lea eax, [BITMAP_ADDR+eax*4]
+    ; FALLTHROUGH
+
+    ; This is weird.
+lock_spinlock:
+    xor ecx, ecx
+    push eax
+    mov eax, SCRATCH_PTR
+.spin
+    lock xchg ecx, [eax]
+    jecxz .spin
+    pop eax
     ret
 
 OS216_Nano_FreePhysPage:
     mov eax, [esp+4]
     call compute_bitmask_from_address
-    lock btc [eax], ecx
-    
-    ; Update if we just freed a page below the filled_until
-    sub eax, memory_map
-    mov ecx, filled_until
-    cmp eax, [ecx]
-    jg .no_update
-    dec eax
-    mov [ecx], eax
-.no_update:
-    ret
+    btc [eax], edx
+    jmp unlock_spinlock
 
 OS216_Nano_MarkPhysPage:
     mov eax, [esp+4]
     call compute_bitmask_from_address
-    lock bts [eax], ecx
-    ret
+    bts [eax], edx
+    jmp unlock_spinlock
 
 segment .rodata
     os216_nano_page_size: dd PAGE_SIZE
-
 segment .bss
-align 4
     os216_phys_memory_size: resd 1
-    ; Optimization, one-entry freelist
-    last_freed_index: resd 1
-    ; Optimization, all entries before this 32bit index are known to be full.
-    filled_until: resd 1
-    memory_map: resb PAGE_BITMASK_SIZE
