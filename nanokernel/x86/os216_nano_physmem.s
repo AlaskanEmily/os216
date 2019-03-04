@@ -114,6 +114,7 @@ OS216_Nano_InitPhysManager:
     push edi
     xor eax, eax
     xor ecx, ecx
+    cld ; Ensure the direction is correct
     
     SET_BLOCK FREE_LIST_SIZE, FREELIST_SIZE_ADDR
     
@@ -141,6 +142,7 @@ os216_nano_freelist_search:
     xor eax, eax
     push edi
     mov edi, FREELIST_SIZE_ADDR
+    cld ; Ensure the direction is correct
 .find_more:
     repe scasb
     jecxz .end
