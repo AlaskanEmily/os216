@@ -78,8 +78,8 @@ BITMAP3_SIZE equ 0x8000
 global os216_phys_memory_size
 global os216_nano_page_size
 global OS216_Nano_AllocatePhysPage
-global OS216_Nano_FreePhysPage
-global OS216_Nano_MarkPhysPage
+global OS216_Nano_FreePhysPages
+global OS216_Nano_MarkPhysPages
 
  ; OS216_Nano_FindBitmapGap(bitmap, map_size, gap_size)
 extern OS216_Nano_FindBitmapGap
@@ -287,14 +287,13 @@ OS216_Nano_AllocatePhysPages:
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-OS216_Nano_MarkPhysPage:
-    push ebx
+OS216_Nano_MarkPhysPages:
     mov edx, OS216_Nano_MarkBitmap
     jmp os216_bitmap_change
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-OS216_Nano_FreePhysPage:
+OS216_Nano_FreePhysPages:
     mov edx, OS216_Nano_UnmarkBitmap
     ; FALLTHROUGH
 os216_bitmap_change:
