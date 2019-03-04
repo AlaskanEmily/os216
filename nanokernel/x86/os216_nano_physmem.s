@@ -134,7 +134,7 @@ OS216_Nano_InitPhysManager:
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- ; Search for an entry with at least dl pages.
+ ; Search for an entry with at least bl pages.
  ; Returns 0, or the index+1
  ; dirties ecx and eax
 os216_nano_freelist_search:
@@ -144,7 +144,7 @@ os216_nano_freelist_search:
 .find_more:
     repe scasb
     jecxz .end
-    cmp dl, [edi-4]
+    cmp bl, [edi-4]
     jg .find_more
     xor al, 0xFF
     sub eax, ecx
