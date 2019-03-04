@@ -157,7 +157,7 @@ os216_nano_freelist_search:
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Epects the loc number in eax
+; Dirties ecx
 %macro os216_acuire_lock 1
 ..@acuire_lock_ %+ %1:
     mov ecx, 1
@@ -169,7 +169,7 @@ os216_nano_freelist_search:
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Clobbers ecx
+; Dirties ecx
 %macro os216_release_lock 1
     xor ecx, ecx
     xchg DWORD [SPINLOCK_ADDR+( %1 *4)], ecx
@@ -288,6 +288,7 @@ OS216_Nano_AllocatePhysPages:
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 OS216_Nano_MarkPhysPage:
+    push ebx
     mov edx, OS216_Nano_MarkBitmap
     jmp os216_bitmap_change
 
@@ -297,32 +298,39 @@ OS216_Nano_FreePhysPage:
     mov edx, OS216_Nano_UnmarkBitmap
     ; FALLTHROUGH
 os216_bitmap_change:
+    push ebx
+    xor ebx, ebx
     ; We can handle count upfront. We can't use the stack as-is.
-    mov eax, [esp+8]
+    mov eax, [esp+12]
     push eax
-
-    mov eax, [esp+4]
+    mov eax, [esp+12]
+    
     cmp eax, 0x00F00000
     jl .bitmap0
     mov ecx, 0x40010000
     cmp eax, ecx
     jl .bitmap3
     ; bitmap 2
+    mov ebx, 2
     sub eax, ecx
     mov ecx, BITMAP2_ADDR
     jmp .apply_bitmap_change
     
 .bitmap3:
+    mov ebx, 3
     sub eax, 0x80000000
     mov ecx, BITMAP3_ADDR
     jmp .apply_bitmap_change
     
 .bitmap1:
+    xor ebx, ebx
+    inc ebx
     sub eax, 0x01000000
     mov ecx, BITMAP1_ADDR
     jmp .apply_bitmap_change
 
 .bitmap0:
+    xor ebx, ebx
     mov ecx, BITMAP0_ADDR
     cmp eax, 0x00080000
     jge .bitmap0_hi
@@ -333,13 +341,16 @@ os216_bitmap_change:
     sub eax, 0x00900000
     xor cl, 0x0E
     ; FALLTHROUGH
-
+    
 .apply_bitmap_change:
     shr eax, PAGE_SHIFT
     push eax
     push ecx
+    os216_acuire_lock ebx
     call edx
+    os216_release_lock ebx
     add esp, 12
+    pop ebx
     ret
 
 segment .rodata
