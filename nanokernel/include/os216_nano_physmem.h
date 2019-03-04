@@ -66,9 +66,9 @@ void OS216_Nano_InitPhysManager(void);
  *
  * This will only return NULL on OOM.
  *
- * Memory should be freed using OS216_Nano_FreePhysPage
+ * Memory should be freed using OS216_Nano_FreePhysPages
  */
-void *OS216_Nano_AllocatePhysPage(void);
+void *OS216_Nano_AllocatePhysPages(int num);
 
 /*****************************************************************************/
 /* Marks that a physical page starting at addr is used.
@@ -79,14 +79,14 @@ void *OS216_Nano_AllocatePhysPage(void);
  *
  * Memory marked with this can be freed again using OS216_Nano_FreePhysPage
  */
-void OS216_Nano_MarkPhysPage(void *);
+void OS216_Nano_MarkPhysPages(void *, int num);
 
 /*****************************************************************************/
 /* Frees a page of physical memory.
  *
  * Double-frees are OK.
  */
-void OS216_Nano_FreePhysPage(void *);
+void OS216_Nano_FreePhysPages(void *, int num);
 
 #ifdef __cplusplus
 } // extern "C"
