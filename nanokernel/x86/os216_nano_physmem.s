@@ -49,15 +49,23 @@
  ;  - bitmap 3 is at 0x40008000-0x40010000
  ; Bitmaps 4-7 are only set up if PAE memory is activated.
  ; TODO: bitmaps 4-7 will have dynamic locations.
-SPINLOCK_ADDR equ 0x500
 
- ; The freelist is at 0x600. It has the following structure:
+FREE_LIST_SIZE equ 256
+
+ ; The freelist is at 0x500 or 0x580. It has the following structure:
  ; 0x600-0x700: 256 count of one-byte sizes
  ; 0x700-0xA00: 256 count of three-byte 20-byte page numbers (top 4 bits are zero)
  ; empty entries have a size of 0. The address might not be zeroed.
-FREE_LIST_SIZE equ 256
-FREELIST_SIZE_ADDR equ 0x600
-FREELIST_ENTRY_ADDR equ 0x700
+
+%ifdef OS216_ENABLE_SMP
+SPINLOCK_ADDR equ 0x500
+FREELIST_SIZE_ADDR equ 0x580
+%else
+FREELIST_SIZE_ADDR equ 0x500
+%endif
+
+FREELIST_ENTRY_ADDR equ FREELIST_SIZE_ADDR+FREE_LIST_SIZE
+FREELIST_END_ADDR equ FREELIST_ENTRY_ADDR+(FREE_LIST_SIZE*3)
 
  ; 0x00900000-0x00F00000 is 0x00600000 bytes (0x0600 pages, 0xC0 bytes of bitmap)
  ; 0x00010000-0x00080000 is 0x00078200 bytes (0x0078 pages, 0x0E bytes of bitmap)
@@ -129,8 +137,10 @@ OS216_Nano_InitPhysManager:
     SETUP_BITMAP 3
     
 .skip_big_bitmaps:
+%ifdef OS216_ENABLE_SMP
     ; Set up the spinlocks.
     SET_BLOCK 16, SPINLOCK_ADDR
+%endif
     ret
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,6 +167,8 @@ os216_nano_freelist_search:
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+%ifdef OS216_ENABLE_SMP
+
 ; Dirties ecx
 %macro os216_acuire_lock 1
 ..@acuire_lock_ %+ %1:
@@ -167,13 +179,21 @@ os216_nano_freelist_search:
     loop ..@acuire_lock_ %+ %1
 %endmacro
 
- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ; Dirties ecx
 %macro os216_release_lock 1
     xor ecx, ecx
     xchg DWORD [SPINLOCK_ADDR+( %1 *4)], ecx
 %endmacro
+
+%else
+
+%macro os216_acuire_lock 1
+%endmacro
+
+%macro os216_release_lock 1
+%endmacro
+
+%endif
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -201,9 +221,7 @@ OS216_Nano_AllocatePhysPages:
 .no_set_entry:
     mov eax, [eax]
 
-    ; Free the spinlock
-    xor ecx, ecx
-    xchg DWORD [SPINLOCK_ADDR+0x0], ecx
+    os216_release_lock 0
     
     ; Return.
     shl eax, PAGE_SHIFT
