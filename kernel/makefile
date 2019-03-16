@@ -9,10 +9,16 @@ NANOKERNELDIR=$(NANOKERNELROOTDIR)/include
 LIBC216ROOTDIR=../libc216
 LIBC216DIR=$(LIBC216ROOTDIR)/include
 
-INCFLAGS=-I$(NANOKERNELDIR) -I$(LIBC216DIR) -I./include
+SYNCHROROOTDIR=../synchro
+SYNCHRODIR=$(SYNCHROROOTDIR)/include
+
+ORLROOTDIR=../liborl
+ORLDIR=$(ORLROOTDIR)/include
+
+INCFLAGS=-I$(NANOKERNELDIR) -I$(LIBC216DIR) -I$(SYNCHRODIR) -I./include
 OBJDIR=obj_$(PLATFORM)
 
-OBJECTS=$(OBJDIR)/os216_init.o $(OBJDIR)/os216_malloc.o $(OBJDIR)/os216_cpp.o
+OBJECTS=$(OBJDIR)/os216_init.o $(OBJDIR)/os216_malloc.o $(OBJDIR)/os216_cpp.o $(OBJDIR)/os216_execute.o $(OBJDIR)/os216_sized_malloc.o
 
 INITHEADERS=$(NANOKERNELDIR)/os216_nano_init.h  $(NANOKERNELDIR)/os216_nano_timer.h  $(NANOKERNELDIR)/os216_nano_interrupt.h  $(NANOKERNELDIR)/os216_nano_virtmem.h 
 $(OBJDIR)/os216_init.o: src/os216_init.cpp $(INITHEADERS)
@@ -20,6 +26,12 @@ $(OBJDIR)/os216_init.o: src/os216_init.cpp $(INITHEADERS)
 
 $(OBJDIR)/os216_malloc.o: src/os216_malloc.c src/os216_malloc.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c src/os216_malloc.c -o $(OBJDIR)/os216_malloc.o
+
+$(OBJDIR)/os216_sized_malloc.o: src/os216_sized_malloc.c src/os216_sized_malloc.h src/os216_malloc.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c src/os216_sized_malloc.c -o $(OBJDIR)/os216_sized_malloc.o
+
+$(OBJDIR)/os216_execute.o: src/os216_execute.c src/os216_execute.h src/os216_malloc.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -I$(ORLDIR) -c src/os216_execute.c -o $(OBJDIR)/os216_execute.o
 
 $(OBJDIR)/os216_cpp.o: src/os216_cpp.cpp src/os216_cpp.hpp src/os216_malloc.h
 	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c src/os216_cpp.cpp -o $(OBJDIR)/os216_cpp.o

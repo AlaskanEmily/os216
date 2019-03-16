@@ -28,4 +28,7 @@
 
 #include "os216_process.hpp"
 
+void StartProcess(const void *obj, unsigned obj_len, Process &proc_out){
 
+
+}

@@ -1,4 +1,5 @@
-/*  Copyright (c) 2019 Emily McDonough.  All rights reserved.
+/*
+ *  Copyright (c) 2017-2019 Emily McDonough.  All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -23,46 +24,24 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef OS216_EXECUTE_H
+#define OS216_EXECUTE_H
+#pragma once
+
+/*****************************************************************************/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*****************************************************************************/
 
-typedef unsigned os216_spinlock_t;
+void OS216_Execute(const void *file_data, unsigned file_len);
 
 /*****************************************************************************/
-
-#ifdef OS216_ENABLE_SMP
-
-/*****************************************************************************/
-
-void OS216_LockSpinlock(os216_spinlock_t*);
-
-/*****************************************************************************/
-
-void OS216_UnlockSpinlock(os216_spinlock_t*);
-
-/*****************************************************************************/
-
-#else /* OS216_ENABLE_SMP */
-
-/* A correct use of spinlocks in a single-threaded environment is equivalent to
- * all no-ops. We can just use sizeof() to ensure a valud argument is passed.
- */
-
-/*****************************************************************************/
-
-#define OS216_LockSpinlock(X) ((void)sizeof((X)))
-
-/*****************************************************************************/
-
-#define OS216_UnlockSpinlock(X) ((void)sizeof((X)))
-
-/*****************************************************************************/
-
-#endif /* OS216_ENABLE_SMP */
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#endif /* OS216_EXECUTE_H */

@@ -1,5 +1,4 @@
-/*
- *  Copyright (c) 2019 Emily McDonough.  All rights reserved.
+/*  Copyright (c) 2019 Emily McDonough.  All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -24,47 +23,55 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef OS216_NANO_BITMAP_H
-#define OS216_NANO_BITMAP_H
-#pragma once
-
-/* Operations on bitmaps. */
-
-#include <stddef.h>
-
-/*****************************************************************************/
+#ifndef OS216_SYNCHRO_SPINLOCK_H
+#define OS216_SYNCHRO_SPINLOCK_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*****************************************************************************/
-/* Finds a gap of at least gap_size in the bitmap.
- * returns the bit offset into bitmap where the gap was found plus one, or
- * zero if no suitable gap was found.
+
+typedef volatile unsigned os216_spinlock_t;
+
+/*****************************************************************************/
+
+#define OS216_SPINLOCK_INIT 0
+
+/*****************************************************************************/
+
+#ifdef OS216_ENABLE_SMP
+
+/*****************************************************************************/
+
+void OS216_LockSpinlock(os216_spinlock_t*);
+
+/*****************************************************************************/
+
+void OS216_UnlockSpinlock(os216_spinlock_t*);
+
+/*****************************************************************************/
+
+#else /* OS216_ENABLE_SMP */
+
+/* A correct use of spinlocks in a single-threaded environment is equivalent to
+ * all no-ops. We can just use sizeof() to ensure a valud argument is passed.
  */
-size_t OS216_Nano_FindBitmapGap(const void *bitmap,
-    size_t map_size,
-    size_t gap_size);
 
 /*****************************************************************************/
-/* Marks (sets) count bits at offset number of bits into the bitmap */
-void OS216_Nano_MarkBitmap(void *bitmap,
-    size_t offset,
-    size_t count);
+
+#define OS216_LockSpinlock(X) ((void)sizeof((X)))
 
 /*****************************************************************************/
-/* Unmarks (clears) count bits at offset number of bits into the bitmap */
-void OS216_Nano_UnmarkBitmap(void *bitmap,
-    size_t offset,
-    size_t count);
+
+#define OS216_UnlockSpinlock(X) ((void)sizeof((X)))
 
 /*****************************************************************************/
+
+#endif /* OS216_ENABLE_SMP */
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-/*****************************************************************************/
-
-#endif /* OS216_NANO_BITMAP_H */
+#endif /* OS216_SYNCHRO_SPINLOCK_H */

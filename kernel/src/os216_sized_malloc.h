@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Emily McDonough.  All rights reserved.
+ *  Copyright (c) 2017-2019 Emily McDonough.  All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -24,11 +24,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef OS216_NANO_BITMAP_H
-#define OS216_NANO_BITMAP_H
+#ifndef OS216_SIZED_MALLOC_H
+#define OS216_SIZED_MALLOC_H
 #pragma once
-
-/* Operations on bitmaps. */
 
 #include <stddef.h>
 
@@ -39,25 +37,12 @@ extern "C" {
 #endif
 
 /*****************************************************************************/
-/* Finds a gap of at least gap_size in the bitmap.
- * returns the bit offset into bitmap where the gap was found plus one, or
- * zero if no suitable gap was found.
- */
-size_t OS216_Nano_FindBitmapGap(const void *bitmap,
-    size_t map_size,
-    size_t gap_size);
+
+void *OS216_SizedMalloc(size_t size);
 
 /*****************************************************************************/
-/* Marks (sets) count bits at offset number of bits into the bitmap */
-void OS216_Nano_MarkBitmap(void *bitmap,
-    size_t offset,
-    size_t count);
 
-/*****************************************************************************/
-/* Unmarks (clears) count bits at offset number of bits into the bitmap */
-void OS216_Nano_UnmarkBitmap(void *bitmap,
-    size_t offset,
-    size_t count);
+void OS216_SizedFree(void *ptr, size_t size);
 
 /*****************************************************************************/
 
@@ -65,6 +50,4 @@ void OS216_Nano_UnmarkBitmap(void *bitmap,
 } // extern "C"
 #endif
 
-/*****************************************************************************/
-
-#endif /* OS216_NANO_BITMAP_H */
+#endif /* OS216_SIZED_MALLOC_H */

@@ -78,7 +78,7 @@ remove_tmp_a:
 	rm libx86_x.a
 
 clean: remove_tmp_a
-	rm -rf obj_$(PLATFORM)
+	rm -rf $(OBJDIR)
 
 .SILENT: remove_tmp_a
 .PHONY: remove_tmp_a clean
