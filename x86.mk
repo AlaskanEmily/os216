@@ -2,7 +2,7 @@
 # http://creativecommons.org/publicdomain/zero/1.0/
 
 all:
-	$(MAKE) -f $(TOOL).mk ROOT=`pwd` ASM=yasm ASMFLAGS="-f elf32 -m x86" PLATFORM=x86 TOOLCHAIN="i486-elf-"
+	$(MAKE) -f $(TOOL).mk ROOT=`pwd` ASM=yasm ASMFLAGS="-f elf32 -m x86" PLATFORM=x86 TOOLCHAIN="i486-os216-"
 
 clean:
 	$(MAKE) -f $(TOOL).mk ROOT=`pwd` PLATFORM=x86 clean

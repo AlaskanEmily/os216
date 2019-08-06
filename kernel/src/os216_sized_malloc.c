@@ -31,6 +31,7 @@
 #include "os216_synchro_spinlock.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define OS216_SIZED_MALLOC_ALIGN 4
 
@@ -152,7 +153,7 @@ static void *os216_small_malloc(unsigned short size){
 
 static void os216_small_free(void *ptr, size_t size){
     const unsigned page_offset =
-        (((long)ptr) % os216_nano_page_size) -
+        (((intptr_t)ptr) % os216_nano_page_size) -
         os216_page_bitmask_size();
     void *const page = ((unsigned char*)ptr) - page_offset;
     const size_t offset = page_offset / OS216_SIZED_MALLOC_ALIGN;
