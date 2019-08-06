@@ -23,6 +23,7 @@
  ; IN THE SOFTWARE.
 
 global OS216_Nano_InitVirtualMemory
+global OS216_Nano_SetTSS
 
 TSS_LEN equ 4096
 
@@ -55,13 +56,6 @@ NO_ACPI_LIMIT equ 0xC0000000
 segment .text
 
 OS216_Nano_InitVirtualMemory:
-    ; Setup the TSS entry of the GDT
-    mov eax, os216_tss_start
-    mov word [os216_tss_descriptor+gdt_entry_base], ax
-    shr eax, 16
-    mov byte [os216_tss_descriptor+gdt_entry_base+2], al
-    shr eax, 8
-    mov byte [os216_tss_descriptor+gdt_entry_base_end], al
     
     ; Load the GDT
     lgdt [os216_global_descriptor_table_ptr]
@@ -81,8 +75,30 @@ OS216_Nano_InitVirtualMemory:
     mov gs, ax
     mov ss, ax
     
-    mov ax, (os216_tss_descriptor - os216_global_descriptor_table)
+    mov ax, 0x98
     ltr ax
+    ret
+
+OS216_Nano_SetTSS:
+    push edi
+    push esi
+    lea esi, [esp+12]
+    
+    ; Set up SS0
+    mov ecx, [esi]
+    mov word [ecx+0x08], 0x30
+    mov word [ecx+0x10], 0x30
+    mov word [ecx+0x18], 0x30
+    
+    ; Copy the TSS address into the segment descriptor
+    mov edi, os216_tss_descriptor+gdt_entry_base
+    mov ecx, 3
+    rep movsb
+    mov edi, os216_tss_descriptor+gdt_entry_base_end
+    inc ecx
+    rep movsb
+    pop esi
+    pop edi
     ret
 
 segment .data
@@ -161,9 +177,4 @@ os216_tss_descriptor:
     iend
 
 os216_global_descriptor_table_end:
-
-segment .bss
-
-os216_tss_start:
-    resb TSS_LEN
     

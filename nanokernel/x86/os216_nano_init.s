@@ -39,6 +39,7 @@ section .text
 
 global OS216_Nano_Halt
 global OS216_Nano_Main
+global os216_nano_kernel_stack
 
 extern OS216_Main
 extern OS216_Nano_MultiBootInit
@@ -56,7 +57,7 @@ OS216_Nano_Main:
     
     ; Load the multiboot data structure.
     ; The boot info struct is in ebx
-    mov esp, stack_top
+    mov esp, os216_nano_kernel_stack
     push ebx
     ;call OS216_Nano_MultiBootInit
     
@@ -67,7 +68,7 @@ OS216_Nano_Main:
 
     ; Set up the stack. This means the bootloader configuration code can 
     ; whatever, and doesn't even need to set up the stack if it isn't needed.
-    mov esp, stack_top
+    mov esp, os216_nano_kernel_stack
     call OS216_Main
     
 OS216_Nano_Halt:
@@ -80,6 +81,7 @@ platform_name:
     db 'x86',0
 
 section .bss
-stack_bottom:
+
+os216_nano_kernel_stack_bottom:
     resb 8192
-stack_top:
+os216_nano_kernel_stack:

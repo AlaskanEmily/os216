@@ -22,6 +22,8 @@
  ; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  ; IN THE SOFTWARE.
 
+global OS216_Nano_AllocatePhysPages
+
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  ; Manages physical memory.
  ; Memory is managed in 4 or 8 bitmaps.
