@@ -171,7 +171,7 @@ void OS216_Execute(const void *file_data, unsigned file_len){
     funcs.cli_free = free;
     funcs.cli_read = os216_cli_read;
     funcs.cli_seek = os216_cli_seek;
-
+    
     handle = ORLInit(&funcs);
     
     format = ORLFileIdentify(handle, &file);

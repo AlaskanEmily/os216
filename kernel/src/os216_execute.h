@@ -29,6 +29,13 @@
 #pragma once
 
 /*****************************************************************************/
+/* Wraps using liborl to run an executable file.
+ * TODO: This needs to do WAY more in the future, and probably will be mostly
+ * moved the process.cpp file.
+ *
+ * We need to perform relocations, allocate the bss segment, and setup
+ * memory protection based on section at the very least.
+ */
 
 #ifdef __cplusplus
 extern "C" {
