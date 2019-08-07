@@ -62,7 +62,7 @@ clean_synchro:
 	$(MAKE) -C synchro PLATFORM=$(PLATFORM) clean
 
 KERNELLIBS=kernel/libos216_$(PLATFORM).a nanokernel/lib$(PLATFORM).a libc216/libc216_$(PLATFORM).a liborl/liborl_$(PLATFORM).a startup/os216_$(PLATFORM)_startup.a synchro/libsynchro_$(PLATFORM).a
-LIBGCCCMD=i486-elf-gcc --print-file-name=libgcc.a
+LIBGCCCMD=$(TOOLCHAIN)gcc --print-file-name=libgcc.a
 LINKERSCRIPT=nanokernel/$(PLATFORM)/os216_nano.ld
 
 $(KERNELBIN): $(KERNELLIBS) $(LINKERSCRIPT)
