@@ -33,6 +33,14 @@ extern "C" {
 #endif
 
 /*****************************************************************************/
+/* Sets the memory to be writable */
+#define OS216_NANO_VIRTMEM_WRITE 1
+
+/*****************************************************************************/
+/* Sets the memory to be executable.  */
+#define OS216_NANO_VIRTMEM_EXECUTE 2
+
+/*****************************************************************************/
 /* Inits the VM system (if required by the platform), but does not start up
  * any paging or the page directory.
  *
@@ -65,6 +73,23 @@ extern "C" {
  *      0x98: TSS segment
  */
 void OS216_Nano_InitVirtualMemory(void);
+
+/*****************************************************************************/
+/* Contains the virtual memory data for a process.
+ * In general this will be the virtual memory page directory. It is stored
+ * as a physical address.
+ * The kernel will (TODO) keep these in identity mapped low, kernel memory.
+ */
+struct OS216_Nano_MemoryDirectory;
+
+/*****************************************************************************/
+
+void OS216_Nano_AllocateVirtualMemory(struct OS216_Nano_MemoryDirectory *mem,
+    unsigned num_pages,
+    void *virt_at,
+    int flags);
+
+/*****************************************************************************/
 
 #ifdef __cplusplus
 } // extern "C"

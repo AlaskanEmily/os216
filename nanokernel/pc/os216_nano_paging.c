@@ -24,6 +24,14 @@
  * IN THE SOFTWARE.
  */
 
+#include "os216_nano_virtmem.h"
+
+#include "os216_nano_physmem.h"
+#include "os216_nano_fatal.h"
+
+#include <stdint.h>
+
+/* TODO: This is now outdated. */
 /* Contains operations to run on page directories. These are intended to be
  * used from assembly, and so the definitions are put into the x86/amd64
  * directories.
@@ -62,6 +70,81 @@ static void os216_setup_page_table_entry(union OS216_PageTableEntry *entry,
     
     entry->flags = ((flags & 3) << 1) | 1;
     entry->bytes[1] &= 0xF0;
+}
+
+/*****************************************************************************/
+/* Ensures that there is a page directory entry for this index. */
+static void os216_nano_ensure_directory_entry(uintptr_t *dir, int entry){
+    if((dir[entry] & 1) == 0){
+        int i;
+        uintptr_t *const table = OS216_Nano_AllocatePhysPages(1);
+        for(i = 0; i < 1024; i++){
+            table[i] = 0;
+        }
+
+        {
+            uintptr_t dir_entry = ((uintptr_t)table) & 0xFFFFF800;
+            dir_entry |= 7; /* Set present, RW, and userland */
+            dir[entry] = dir_entry;
+        }
+    }
+}
+
+/*****************************************************************************/
+
+void OS216_Nano_AllocateVirtualMemory(struct OS216_Nano_MemoryDirectory *mem,
+    unsigned num_pages,
+    void *virt_at,
+    int flags){
+    
+    uintptr_t *const dir = (uintptr_t*)mem;
+    if((((uintptr_t)virt_at) & 0x03FF) != 0){
+        OS216_Nano_Fatal("Misaligned virtual memory address");
+    }
+    else{
+        /* TODO: This needs one more level for amd64 */
+        uintptr_t directory_i = ((uintptr_t)virt_at) >> 22;
+        uintptr_t entry_i = (((uintptr_t)virt_at) >> 12) & 0x03FF;
+        unsigned i = 0;
+        uintptr_t allocated =
+            (uintptr_t)OS216_Nano_AllocatePhysPages(num_pages);
+        uintptr_t *table;
+        
+        /* Make sure the starting table exists. */
+        os216_nano_ensure_directory_entry(dir, directory_i);
+        
+        table = ((uintptr_t**)dir)[directory_i];
+        allocated &= 0xFFFFF800;
+        allocated |= 5;
+        if(flags & OS216_NANO_VIRTMEM_WRITE)
+            allocated |= 2;
+        
+        /* TODO: NX bit support for AMD64 and PAE, XD bit for Pentium 4? */
+        
+        /* Set all the page table entries, allocating new tables as needed. */
+next_page:
+        {
+            table[entry_i] = allocated;
+            allocated += 0x400;
+            
+            if(++i < num_pages){
+                /* Advance to the next physical page we allocated */
+                allocated += 1024;
+                
+                /* Move to the next directory entry, allocating a new table
+                 * if necessary.
+                 */
+                if(++entry_i == 0x400){
+                    entry_i = 0;
+                    directory_i++;
+                    os216_nano_ensure_directory_entry(dir, directory_i);
+                }
+                /* Grab the new table. */
+                table = ((uintptr_t**)dir)[directory_i];
+                goto next_page;
+            }
+        }
+    }
 }
 
 /*****************************************************************************/

@@ -55,7 +55,7 @@ $(OBJDIR)/os216_nano_console_vga.o: pc/os216_nano_console_vga.c include/os216_na
 	$(CC) $(CFLAGS) -I./include -c pc/os216_nano_console_vga.c -o $(OBJDIR)/os216_nano_console_vga.o
 
 $(OBJDIR)/os216_nano_paging.o: pc/os216_nano_paging.c
-	$(CC) $(CFLAGS) -c pc/os216_nano_paging.c -o $(OBJDIR)/os216_nano_paging.o
+	$(CC) $(CFLAGS) -I./include -c pc/os216_nano_paging.c -o $(OBJDIR)/os216_nano_paging.o
 
 # Common objects
 COMMONOBJECTS=$(OBJDIR)/os216_nano_multiboot.o $(OBJDIR)/os216_nano_fatal.o $(OBJDIR)/os216_nano_bitmap.o
